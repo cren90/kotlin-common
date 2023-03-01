@@ -2,9 +2,9 @@
 
 package com.cren90.kotlin.common.extensions
 
-import android.util.Base64
+import java.util.*
 
-fun ByteArray.toBase64String(): String = Base64.encodeToString(this, Base64.DEFAULT)
+fun ByteArray.toBase64String(): String = Base64.getEncoder().encodeToString(this)
 
 /** A helper method to convert a byte array to a hex-encoded string. */
 fun ByteArray.toHexLower(): String =

@@ -2,17 +2,10 @@
 
 package com.cren90.kotlin.common.extensions
 
-import android.os.Build
-import android.telephony.PhoneNumberUtils
-import android.text.Html
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import android.util.Base64
 import java.io.UnsupportedEncodingException
 import java.net.URLEncoder
 import java.util.*
+import java.util.regex.Pattern
 
 /**
  * Replaces the final instance of [oldValue] with [newValue] based on [ignoreCase] and returns the
@@ -51,7 +44,15 @@ fun String.isValidEmail(): Boolean {
 /**
  * Checks if the string is a phone number
  */
-fun String.isValidPhone(): Boolean = PhoneNumberUtils.isGlobalPhoneNumber(this)
+fun String.isValidPhone(): Boolean {
+    if (this.isEmpty()) {
+        return false
+    }
+
+    val globalPhoneNumberPattern = Pattern.compile("[+]?[\\d.-]+")
+
+    return globalPhoneNumberPattern.matcher(this).matches()
+}
 
 /**
  * Checks if the string is a 10 digit phone number
@@ -73,10 +74,6 @@ fun String.removePhoneCountryPrefix(): String {
         result = this.removeRange(0, start)
     }
     return result
-}
-
-fun String.fetchVerificationCodeFromSms(): String {
-    return Regex("(\\d{6})").find(this)?.value ?: ""
 }
 
 fun String.underscoreToWords(): String = replace("_", " ")
@@ -130,44 +127,15 @@ fun String.capitalizeWords(): String {
     return stringBuilder.toString().trim { it <= ' ' }
 }
 
-fun String.colorPhoneNumber(color: Int): CharSequence {
-    val pattern = "\\d? ?\\(?\\d{3}\\)?-? ?\\d{3}–? ?\\d{4}".toRegex()
-
-    val phoneNumber = pattern.find(this)?.value
-
-    return phoneNumber?.let { colorSubstring(phoneNumber, color) } ?: this
-}
-
-fun String.colorSubstring(substring: String, color: Int): CharSequence {
-    val spannable = SpannableString(this)
-    var substringStart = 0
-    var start: Int
-    while (this.indexOf(substring, substringStart).also { start = it } >= 0) {
-        spannable.setSpan(
-            ForegroundColorSpan(color), start, start + substring.length,
-            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
-        substringStart = start + substring.length
-    }
-
-    return spannable
-}
-
 fun String.urlEncode(): String = try {
     URLEncoder.encode(this, "UTF-8")
 } catch (e: UnsupportedEncodingException) {
     ""
 }
 
-@Suppress("DEPRECATION", "kotlin:S1874")
-fun String.toHtmlSpan(): Spanned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-    Html.fromHtml(this, Html.FROM_HTML_MODE_LEGACY)
-else
-    Html.fromHtml(this)
-
 fun String.toUUID(): UUID = UUID.fromString(this)
 
-fun String.fromBase64(): ByteArray = Base64.decode(this, Base64.DEFAULT)
+fun String.fromBase64(): ByteArray = Base64.getDecoder().decode(this)
 
 /** A helper method to convert a hex-encoded string to a byte array. */
 fun String.fromHex(): ByteArray {
